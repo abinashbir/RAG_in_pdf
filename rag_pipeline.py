@@ -13,8 +13,8 @@ vector_store = FAISS.load_local(
 )
 
 llm = ChatGoogleGenerativeAI(
-    model="gemini-2.0-flash",  # see note below
-    google_api_key=os.getenv("GEMINI_API_KEY")
+    model="gemini-3.5-flash",
+    google_api_key=os.getenv("GOOGLE_API_KEY")
 )
 
 def get_answer(query: str) -> str:
@@ -31,4 +31,12 @@ If the answer is not present in the context, say:
 "I don't know based on the provided document."
 """
     response = llm.invoke(prompt)
-    return response.content
+    content = response.content
+
+    # Gemini 3.x returns content as a list of parts instead of a string
+    if isinstance(content, list):
+        return "".join(
+            part.get("text", "") if isinstance(part, dict) else str(part)
+            for part in content
+        )
+    return content
